@@ -1,0 +1,10 @@
+﻿src/pages/MapView.tsx(145,13): error TS2322: Type '{ type: "Feature"; properties: { height: number; base_height: number; color: string; id: string; name: string; type: "hospital" | "school" | "bridge" | "dam" | "road" | "power_station" | "water_treatment"; ... 7 more ...; last_inspection: string; }; geometry: { ...; }; }[]' is not assignable to type 'Feature<Geometry, GeoJsonProperties>[]'.
+  Type '{ type: "Feature"; properties: { height: number; base_height: number; color: string; id: string; name: string; type: "hospital" | "school" | "bridge" | "dam" | "road" | "power_station" | "water_treatment"; ... 7 more ...; last_inspection: string; }; geometry: { ...; }; }' is not assignable to type 'Feature<Geometry, GeoJsonProperties>'.
+    Types of property 'geometry' are incompatible.
+      Type '{ type: "Polygon"; coordinates: (number[] | undefined)[][]; }' is not assignable to type 'Geometry'.
+        Type '{ type: "Polygon"; coordinates: (number[] | undefined)[][]; }' is not assignable to type 'Polygon'.
+          Types of property 'coordinates' are incompatible.
+            Type '(number[] | undefined)[][]' is not assignable to type 'Position[][]'.
+              Type '(number[] | undefined)[]' is not assignable to type 'Position[]'.
+                Type 'number[] | undefined' is not assignable to type 'Position'.
+                  Type 'undefined' is not assignable to type 'number[]'.

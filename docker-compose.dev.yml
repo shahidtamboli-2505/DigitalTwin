@@ -1,0 +1,146 @@
+# ================================================================
+# Docker Compose — Digital Twin Full Stack (Development)
+# ================================================================
+# Services: Frontend, Backend, PostgreSQL+PostGIS, MongoDB, Redis,
+#           Celery Worker, Celery Beat
+#
+# Usage:
+#   docker-compose -f docker-compose.dev.yml up -d
+#   docker-compose -f docker-compose.dev.yml down
+# ================================================================
+
+services:
+
+  # ── Frontend (React + Vite) ────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../docker/frontend.Dockerfile
+    container_name: dt-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8000/api
+      - VITE_WS_URL=ws://localhost:8000/ws
+    depends_on:
+      - backend
+    networks:
+      - dt-network
+
+  # ── Backend (FastAPI) ──────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ../docker/backend.Dockerfile
+    container_name: dt-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    env_file:
+      - ./backend/.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    networks:
+      - dt-network
+
+  # ── PostgreSQL + PostGIS ───────────────────────────────────
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: dt-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: digital_twin
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dt-network
+
+  # ── MongoDB ────────────────────────────────────────────────
+  mongodb:
+    image: mongo:7
+    container_name: dt-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodata:/data/db
+    networks:
+      - dt-network
+
+  # ── Redis ──────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: dt-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dt-network
+
+  # ── Celery Worker ──────────────────────────────────────────
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: ../docker/backend.Dockerfile
+    container_name: dt-celery-worker
+    command: celery -A app.core.celery_app worker --loglevel=info --concurrency=2
+    volumes:
+      - ./backend:/app
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - redis
+      - backend
+    networks:
+      - dt-network
+
+  # ── Celery Beat (Scheduler) ────────────────────────────────
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: ../docker/backend.Dockerfile
+    container_name: dt-celery-beat
+    command: celery -A app.core.celery_app beat --loglevel=info
+    volumes:
+      - ./backend:/app
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - redis
+      - backend
+    networks:
+      - dt-network
+
+# ── Volumes ──────────────────────────────────────────────────
+volumes:
+  pgdata:
+  mongodata:
+  redisdata:
+
+# ── Network ──────────────────────────────────────────────────
+networks:
+  dt-network:
+    driver: bridge

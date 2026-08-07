@@ -1,0 +1,58 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Build
+dist/
+build/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Docker
+docker/volumes/
+
+# AI Models (large files)
+ai/models/**/*.pt
+ai/models/**/*.onnx
+ai/models/**/*.pkl
+ai/models/**/*.joblib
+ai/datasets/**/*.zip
+ai/datasets/**/*.tar.gz
+!ai/models/**/.gitkeep
+
+# Raster data (large)
+data/raster/**/*.tif
+data/raster/**/*.tiff
+!data/raster/.gitkeep
+
+# Logs
+*.log
+logs/
+
+# Coverage
+coverage/
+htmlcov/
+.coverage
+.pytest_cache/
+
+# Uploads
+uploads/
