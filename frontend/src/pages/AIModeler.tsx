@@ -13,6 +13,8 @@ const PROCESSING_STEPS = [
   "Optimization complete."
 ];
 
+import { Link } from "react-router-dom";
+
 export default function AIModeler() {
   const [selectedAsset, setSelectedAsset] = useState<string>("");
   const [processing, setProcessing] = useState(false);
@@ -149,7 +151,7 @@ export default function AIModeler() {
                  <div>Polygons: {(Math.random() * 20000 + 5000).toFixed(0)}</div>
                  <div>Textures: 4K HDR</div>
                </div>
-               <a href="/map" className="dt-hud-btn-primary">DEPLOY TO GIS MAP</a>
+               <Link to="/map" className="dt-hud-btn-primary">DEPLOY TO GIS MAP</Link>
              </motion.div>
            ) : (
              <div className="dt-hud-idle">

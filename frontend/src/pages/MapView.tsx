@@ -176,7 +176,7 @@ export default function MapView() {
         return {
           type: "Feature",
           properties: { id: item.id, name: item.name, type: item.type, condition: item.condition,
-            risk_score: item.risk_score, capacity: item.capacity,
+            risk_score: item.risk_score, capacity: item.capacity, image_url: item.image_url,
             height: cfg.h, base_height: 0, color: cfg.color, glow: cfg.glow },
           geometry: { type: "Polygon",
             coordinates: isDam
@@ -230,8 +230,14 @@ export default function MapView() {
       m.on("click", "infra-3d-base", e => {
         if (!e.features?.[0]) return;
         const p = e.features[0].properties!;
+        
+        let imgTag = '';
+        if (p.image_url) {
+          imgTag = `<img src="${p.image_url}" alt="${p.name}" style="width:100%;height:140px;object-fit:cover;border-radius:4px;margin-bottom:8px" />`;
+        }
+
         new maplibregl.Popup({ closeButton: true, maxWidth: "280px" }).setLngLat(e.lngLat)
-          .setHTML(`<div style="font-family:Inter,sans-serif;color:#f8fafc;padding:8px"><strong style="font-size:14px;border-bottom:1px solid #334155;padding-bottom:4px;display:block">${p.name}</strong><p style="margin:4px 0;font-size:12px;color:#94a3b8;text-transform:capitalize">Type: ${String(p.type).replace('_',' ')}</p><p style="margin:4px 0;font-size:12px;color:${p.glow};font-weight:600;text-transform:capitalize">Condition: ${p.condition}</p><p style="font-size:12px;font-weight:700;color:#fbbf24">Risk: ${p.risk_score}</p><p style="font-size:11px;color:#64748b">Capacity: ${p.capacity}</p></div>`)
+          .setHTML(`<div style="font-family:Inter,sans-serif;color:#f8fafc;padding:8px">${imgTag}<strong style="font-size:14px;border-bottom:1px solid #334155;padding-bottom:4px;display:block">${p.name}</strong><p style="margin:4px 0;font-size:12px;color:#94a3b8;text-transform:capitalize">Type: ${String(p.type).replace('_',' ')}</p><p style="margin:4px 0;font-size:12px;color:${p.glow};font-weight:600;text-transform:capitalize">Condition: ${p.condition}</p><p style="font-size:12px;font-weight:700;color:#fbbf24">Risk: ${p.risk_score}</p><p style="font-size:11px;color:#64748b">Capacity: ${p.capacity}</p></div>`)
           .addTo(m);
       });
       m.on("click", "sensors-points", e => {

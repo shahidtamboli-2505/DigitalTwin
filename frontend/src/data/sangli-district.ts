@@ -39,6 +39,7 @@ export interface InfrastructureAsset {
   capacity: string;
   year_built: number;
   last_inspection: string;
+  image_url?: string;
 }
 
 export interface SensorReading {
@@ -153,7 +154,7 @@ export const INFRASTRUCTURE: InfrastructureAsset[] = [
   { id: "dam-002", name: "Morna Dam", type: "dam", tehsil: "Kadegaon", lat: 17.1800, lng: 74.2800, condition: "fair", risk_score: 45, capacity: "2.85 TMC", year_built: 1978, last_inspection: "2025-11-20" },
   { id: "dam-003", name: "Dandoba Dam", type: "dam", tehsil: "Miraj", lat: 16.9200, lng: 74.6800, condition: "fair", risk_score: 38, capacity: "0.72 TMC", year_built: 1992, last_inspection: "2026-01-10" },
   // Bridges
-  { id: "bridge-001", name: "Irwin Bridge (Krishna)", type: "bridge", tehsil: "Miraj", lat: 16.8520, lng: 74.5800, condition: "poor", risk_score: 78, capacity: "20 ton", year_built: 1907, last_inspection: "2025-09-01" },
+  { id: "bridge-001", name: "Irwin Bridge (Krishna)", type: "bridge", tehsil: "Miraj", lat: 16.8520, lng: 74.5800, condition: "poor", risk_score: 78, capacity: "20 ton", year_built: 1907, last_inspection: "2025-09-01", image_url: "https://images.unsplash.com/photo-1513828742140-ccaa15f19387?w=600&h=300&fit=crop" },
   { id: "bridge-002", name: "Sangli-Miraj Bridge (NH-166)", type: "bridge", tehsil: "Miraj", lat: 16.8450, lng: 74.5900, condition: "good", risk_score: 32, capacity: "60 ton", year_built: 2005, last_inspection: "2026-02-28" },
   { id: "bridge-003", name: "Haripur Bridge (Warna)", type: "bridge", tehsil: "Palus", lat: 17.0700, lng: 74.4200, condition: "fair", risk_score: 55, capacity: "40 ton", year_built: 1995, last_inspection: "2025-12-15" },
   { id: "bridge-004", name: "Islampur Bridge (Krishna)", type: "bridge", tehsil: "Walwa", lat: 17.0650, lng: 74.2600, condition: "good", risk_score: 30, capacity: "50 ton", year_built: 2012, last_inspection: "2026-04-10" },
