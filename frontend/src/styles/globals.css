@@ -1154,6 +1154,37 @@ body {
 .dt-map-legend-items span { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--text-secondary); }
 .dt-legend-color { width: 10px; height: 10px; border-radius: 2px; }
 
+/* ─── View Presets ──────────────────────────────────────── */
+.dt-view-presets {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  display: flex;
+  gap: 4px;
+  z-index: 10;
+}
+.dt-view-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+  backdrop-filter: blur(12px);
+  white-space: nowrap;
+}
+.dt-view-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+.dt-view-btn.active {
+  background: rgba(96, 165, 250, 0.15);
+  border-color: rgba(96, 165, 250, 0.4);
+  color: var(--accent);
+  font-weight: 600;
+}
+
 /* ─── AI Predictions ────────────────────────────────────── */
 .dt-ai-badge {
   display: flex;
