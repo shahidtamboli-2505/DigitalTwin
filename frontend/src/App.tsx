@@ -7,6 +7,7 @@ import Sensors from "./pages/Sensors";
 import AIPredictions from "./pages/AIPredictions";
 import Alerts from "./pages/Alerts";
 import Reports from "./pages/Reports";
+import AIModeler from "./pages/AIModeler";
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
           <Route path="/infrastructure" element={<Infrastructure />} />
           <Route path="/sensors" element={<Sensors />} />
           <Route path="/ai-predictions" element={<AIPredictions />} />
+          <Route path="/ai-modeler" element={<AIModeler />} />
           <Route path="/alerts" element={<Alerts />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="*" element={<Navigate to="/" replace />} />

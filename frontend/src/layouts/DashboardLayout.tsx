@@ -3,7 +3,7 @@ import { NavLink, Outlet, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Map, Building2, Radio, Brain, Bell, FileText,
   Shield, ChevronLeft, ChevronRight, Menu, X, Sun, Moon,
-  Search, BellRing,
+  Search, BellRing, Cpu
 } from "lucide-react";
 import { ALERTS } from "../data/sangli-district";
 
@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { to: "/infrastructure", icon: Building2, label: "Infrastructure" },
   { to: "/sensors", icon: Radio, label: "Live Sensors" },
   { to: "/ai-predictions", icon: Brain, label: "AI Predictions" },
+  { to: "/ai-modeler", icon: Cpu, label: "AI 3D Agent" },
   { to: "/alerts", icon: Bell, label: "Alerts" },
   { to: "/reports", icon: FileText, label: "Reports" },
 ];

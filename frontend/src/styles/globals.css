@@ -1493,3 +1493,50 @@ body {
 @media (max-width: 480px) {
   .dt-grid-4 { grid-template-columns: 1fr; }
 }
+
+/* ─── AI Modeler HUD (J.A.R.V.I.S Style) ────────────────── */
+.dt-jarvis-page { background: radial-gradient(circle at center, #0a0f18 0%, #030509 100%); }
+.dt-hud-badge { border: 1px solid rgba(56,189,248,0.5); box-shadow: 0 0 10px rgba(56,189,248,0.2) inset; }
+.dt-hud-panel { background: rgba(8,15,30,0.6); border: 1px solid #1e293b; border-top: 2px solid #38bdf8; box-shadow: 0 4px 30px rgba(0,0,0,0.5); backdrop-filter: blur(10px); }
+.dt-hud-header { border-bottom: 1px dashed rgba(56,189,248,0.3); background: rgba(56,189,248,0.05); }
+.dt-hud-header h3 { color: #38bdf8; text-transform: uppercase; letter-spacing: 2px; font-size: 13px; display: flex; align-items: center; gap: 8px; }
+.dt-hud-body { display: flex; flex-direction: column; gap: 20px; }
+.dt-hud-field label { color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; display: block; }
+.dt-hud-select { width: 100%; background: #0f172a; border: 1px solid #1e293b; color: #38bdf8; padding: 10px; border-radius: 4px; outline: none; }
+.dt-hud-select:focus { border-color: #38bdf8; box-shadow: 0 0 8px rgba(56,189,248,0.3); }
+.dt-hud-asset-info { border-left: 2px solid #38bdf8; padding-left: 12px; background: linear-gradient(90deg, rgba(56,189,248,0.1) 0%, transparent 100%); padding: 10px; }
+.dt-hud-detail { font-size: 12px; color: #e2e8f0; font-family: monospace; margin-bottom: 4px; }
+.dt-hud-detail span { color: #94a3b8; }
+.dt-hud-upload-zone { border: 1px dashed #38bdf8; border-radius: 8px; padding: 30px; text-align: center; background: rgba(56,189,248,0.02); transition: all 0.3s; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 150px; }
+.dt-hud-upload-zone:hover:not([style*="cursor: not-allowed"]) { background: rgba(56,189,248,0.08); box-shadow: 0 0 15px rgba(56,189,248,0.2) inset; }
+.dt-hud-upload-zone h4 { color: #38bdf8; margin: 10px 0 4px; font-size: 14px; letter-spacing: 1px; }
+.dt-hud-upload-zone p { color: #64748b; font-size: 11px; margin: 0; }
+.dt-hud-glow-icon { color: #38bdf8; filter: drop-shadow(0 0 8px #38bdf8); margin-bottom: 10px; }
+.dt-spin { animation: spin 2s linear infinite; }
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+/* Display Panel */
+.dt-hud-display { background: #020617; border: 1px solid #1e293b; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; min-height: 480px; }
+.dt-hud-scanner-overlay { position: absolute; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(56,189,248,0.03) 2px, rgba(56,189,248,0.03) 4px); pointer-events: none; z-index: 1; }
+.dt-hud-idle { text-align: center; color: #334155; position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.dt-hud-idle p { font-family: monospace; letter-spacing: 2px; margin-top: 10px; font-weight: 600; }
+
+/* Processing Animations */
+.dt-hud-logs { position: absolute; inset: 0; padding: 30px; display: flex; gap: 30px; z-index: 2; }
+.dt-hud-wireframe-anim { position: relative; width: 120px; height: 120px; display: flex; align-items: center; justify-content: center; border: 1px dashed #1e293b; border-radius: 50%; padding: 20px; flex-shrink: 0; }
+.dt-pulse-fast { animation: pulseHUD 1s ease-in-out infinite alternate; }
+.dt-scan-line-v { position: absolute; width: 150%; height: 2px; background: #38bdf8; box-shadow: 0 0 10px #38bdf8; animation: scanAnim 2s linear infinite; z-index: 10; left: -25%; }
+@keyframes scanAnim { 0% { top: -20%; } 100% { top: 120%; } }
+@keyframes pulseHUD { from { opacity: 0.5; filter: drop-shadow(0 0 2px #38bdf8); } to { opacity: 1; filter: drop-shadow(0 0 15px #38bdf8); } }
+.dt-log-stream { flex: 1; display: flex; flex-direction: column; gap: 8px; font-family: monospace; font-size: 13px; color: #38bdf8; justify-content: flex-end; padding-bottom: 20px; overflow: hidden; }
+.dt-log-line { border-left: 2px solid #1e293b; padding-left: 10px; }
+.dt-log-cursor { display: inline-block; width: 8px; background: #38bdf8; animation: blink 1s step-end infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+/* Success State */
+.dt-hud-success { text-align: center; background: rgba(52,211,153,0.05); border: 2px solid rgba(52,211,153,0.3); padding: 40px; border-radius: 8px; box-shadow: 0 0 20px rgba(52,211,153,0.1) inset; z-index: 10; }
+.dt-hud-success h3 { color: #34d399; letter-spacing: 2px; text-shadow: 0 0 10px rgba(52,211,153,0.5); font-weight: 700; margin-bottom: 10px; }
+.dt-hud-success p { color: #94a3b8; font-family: monospace; margin-bottom: 20px; font-size: 14px; }
+.dt-hud-stats { display: flex; justify-content: space-between; font-family: monospace; color: #e2e8f0; font-size: 11px; margin-bottom: 30px; background: rgba(0,0,0,0.4); padding: 15px; border-radius: 4px; gap: 15px; border: 1px solid #1e293b; }
+.dt-hud-btn-primary { display: inline-block; background: rgba(52,211,153,0.1); border: 1px solid #34d399; color: #34d399; padding: 12px 24px; border-radius: 4px; text-decoration: none; font-weight: 600; letter-spacing: 1px; transition: all 0.3s; text-transform: uppercase; font-size: 13px; }
+.dt-hud-btn-primary:hover { background: rgba(52,211,153,0.25); box-shadow: 0 0 15px rgba(52,211,153,0.4); color: #fff; }
