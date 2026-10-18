@@ -77,7 +77,14 @@ app.add_middleware(
 )
 
 
-# ── Health Check ─────────────────────────────────────────────
+# ── Routers ──────────────────────────────────────────────────
+from app.routers import auth, infrastructure, analytics, ai, sensors, alerts
+app.include_router(auth.router)
+app.include_router(infrastructure.router)
+app.include_router(analytics.router)
+app.include_router(ai.router)
+app.include_router(sensors.router)
+app.include_router(alerts.router)
 @app.get("/", tags=["Health"])
 async def root():
     """Root endpoint — confirms the API is running."""

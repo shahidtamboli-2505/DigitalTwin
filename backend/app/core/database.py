@@ -16,13 +16,20 @@ from app.core.config import get_settings
 
 settings = get_settings()
 
+# Clean database_url if sslmode is in query string
+db_url = settings.database_url.replace("?sslmode=require", "").replace("&sslmode=require", "")
+connect_args = {}
+if "neon.tech" in settings.database_url or "sslmode=require" in settings.database_url:
+    connect_args["ssl"] = True
+
 # Create async engine with connection pooling
 engine = create_async_engine(
-    settings.database_url,
+    db_url,
     pool_size=settings.database_pool_size,
     max_overflow=10,
     pool_pre_ping=True,
     echo=settings.app_debug,
+    connect_args=connect_args,
 )
 
 # Session factory — creates new sessions for each request

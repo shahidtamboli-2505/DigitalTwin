@@ -193,6 +193,38 @@ export default function MapView() {
         paint: { "line-color": ["get", "glow"], "line-width": 2.5, "line-opacity": 0.6, "line-blur": 4 },
       });
 
+      // Try fetching real infrastructure from PostGIS database
+      fetch("/api/infrastructure/geojson")
+        .then(r => r.ok ? r.json() : null)
+        .then(apiGeoJSON => {
+          if (apiGeoJSON && apiGeoJSON.features && apiGeoJSON.features.length > 0) {
+            const realFeatures: GeoJSON.Feature[] = apiGeoJSON.features.map((f: any, idx: number) => {
+              const p = f.properties;
+              const coords = f.geometry.coordinates;
+              const cfg = INFRA_SHAPES[p.type] || INFRA_SHAPES.bridge!;
+              return {
+                type: "Feature",
+                properties: {
+                  id: p.id, name: p.name, type: p.type, condition: p.condition || "operational",
+                  risk_score: p.risk_score || 30, capacity: p.description || "Active asset",
+                  height: cfg.h, base_height: 0, color: cfg.color, glow: cfg.glow
+                },
+                geometry: {
+                  type: "Polygon",
+                  coordinates: p.type === "dam"
+                    ? createDamArc(coords, cfg.w, cfg.d)
+                    : createBuildingFootprint(coords, cfg.w, cfg.d, (idx * 43 + 20) % 90)
+                }
+              };
+            });
+            const src = m.getSource("infrastructure-3d") as maplibregl.GeoJSONSource;
+            if (src) {
+              src.setData({ type: "FeatureCollection", features: realFeatures });
+            }
+          }
+        })
+        .catch(() => {});
+
       // Infrastructure labels
       const labelFC: GeoJSON.FeatureCollection = { type: "FeatureCollection",
         features: INFRASTRUCTURE.map(it => ({ type: "Feature" as const, properties: { name: it.name, type: it.type },

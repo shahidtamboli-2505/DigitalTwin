@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Users, AlertTriangle, Radio, Droplets, Thermometer,
@@ -9,9 +10,10 @@ import {
 } from "recharts";
 import StatCard from "../components/ui/StatCard";
 import Badge from "../components/ui/Badge";
+import { api } from "../lib/api";
 import {
-  DISTRICT_OVERVIEW, TEHSILS, FLOOD_HISTORY, WEATHER_DATA,
-  ALERTS, SUMMARY_STATS, SENSORS,
+  TEHSILS, FLOOD_HISTORY as MOCK_FLOOD, WEATHER_DATA as MOCK_WEATHER,
+  ALERTS, SENSORS,
 } from "../data/sangli-district";
 
 const tooltipStyle = {
@@ -21,8 +23,6 @@ const tooltipStyle = {
   color: "var(--text-primary)",
   fontSize: "12px",
 };
-
-
 
 function getRiskLabel(score: number): string {
   if (score >= 70) return "High";
@@ -34,11 +34,46 @@ function getRiskLabel(score: number): string {
 export default function Dashboard() {
   const navigate = useNavigate();
 
+  const [summaryStats, setSummaryStats] = useState({
+    population: 2822143,
+    avg_risk_score: 42.5,
+    sensors_online: 22,
+    total_sensors: 24,
+    sensors_warning: 2,
+    sensors_offline: 0,
+    active_alerts: 4,
+    high_alerts: 1,
+  });
+
+  const [weatherData, setWeatherData] = useState(MOCK_WEATHER);
+  const [floodHistory, setFloodHistory] = useState(MOCK_FLOOD);
+
+  useEffect(() => {
+    // Fetch summary stats from FastAPI backend
+    api.get("/api/analytics/summary")
+      .then(res => {
+        if (res.data) setSummaryStats(res.data);
+      })
+      .catch(err => console.warn("Failed to fetch analytics summary, fallback to mock:", err));
+
+    api.get("/api/analytics/climate")
+      .then(res => {
+        if (res.data) setWeatherData(res.data);
+      })
+      .catch(() => {});
+
+    api.get("/api/analytics/flood-history")
+      .then(res => {
+        if (res.data) setFloodHistory(res.data);
+      })
+      .catch(() => {});
+  }, []);
+
   const populationData = TEHSILS
     .sort((a, b) => b.population - a.population)
     .map(t => ({ name: t.name.split(" ")[0], population: t.population, risk: t.risk_score }));
 
-  const floodData = FLOOD_HISTORY
+  const floodData = floodHistory
     .sort((a, b) => a.year - b.year)
     .filter(f => f.year >= 2000)
     .map(f => ({
@@ -77,7 +112,7 @@ export default function Dashboard() {
       <div className="dt-grid-4">
         <StatCard
           title="Population"
-          value={(DISTRICT_OVERVIEW.population / 100000).toFixed(1) + " L"}
+          value={(summaryStats.population / 100000).toFixed(1) + " L"}
           subtitle="Census 2011"
           icon={<Users size={20} />}
           color="blue"
@@ -86,8 +121,8 @@ export default function Dashboard() {
         />
         <StatCard
           title="Risk Score"
-          value={SUMMARY_STATS.avg_risk_score + "/100"}
-          subtitle={getRiskLabel(SUMMARY_STATS.avg_risk_score) + " Risk"}
+          value={summaryStats.avg_risk_score + "/100"}
+          subtitle={getRiskLabel(summaryStats.avg_risk_score) + " Risk"}
           icon={<AlertTriangle size={20} />}
           color="orange"
           trend={{ value: -3.5, label: "vs last month" }}
@@ -95,16 +130,16 @@ export default function Dashboard() {
         />
         <StatCard
           title="Active Sensors"
-          value={`${SUMMARY_STATS.sensors_online}/${SUMMARY_STATS.total_sensors}`}
-          subtitle={`${SUMMARY_STATS.sensors_warning} warning, ${SUMMARY_STATS.sensors_offline} offline`}
+          value={`${summaryStats.sensors_online}/${summaryStats.total_sensors}`}
+          subtitle={`${summaryStats.sensors_warning} warning, ${summaryStats.sensors_offline} offline`}
           icon={<Radio size={20} />}
           color="green"
           onClick={() => navigate("/sensors")}
         />
         <StatCard
           title="Active Alerts"
-          value={SUMMARY_STATS.active_alerts}
-          subtitle={`${SUMMARY_STATS.high_alerts} high priority`}
+          value={summaryStats.active_alerts}
+          subtitle={`${summaryStats.high_alerts} high priority`}
           icon={<AlertTriangle size={20} />}
           color="red"
           trend={{ value: 12, label: "this week" }}
@@ -184,7 +219,7 @@ export default function Dashboard() {
           </div>
           <div className="dt-card-body" style={{ height: 280 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={WEATHER_DATA} margin={{ top: 5, right: 10, left: -15, bottom: 5 }}>
+              <AreaChart data={weatherData} margin={{ top: 5, right: 10, left: -15, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.5} />
                 <XAxis dataKey="month" tick={{ fill: "var(--text-muted)", fontSize: 11 }} />
                 <YAxis tick={{ fill: "var(--text-muted)", fontSize: 11 }} />

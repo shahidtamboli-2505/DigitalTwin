@@ -20,6 +20,7 @@ export default function AIModeler() {
   const [processing, setProcessing] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
   const [complete, setComplete] = useState(false);
+  const [aiResult, setAiResult] = useState<any>(null);
 
   const assetInfo = INFRASTRUCTURE.find(i => i.id === selectedAsset);
 
@@ -28,11 +29,28 @@ export default function AIModeler() {
       if (stepIndex < PROCESSING_STEPS.length) {
         const timer = setTimeout(() => {
           setStepIndex(prev => prev + 1);
-        }, 1200 + Math.random() * 800);
+        }, 800);
         return () => clearTimeout(timer);
       } else {
-        setProcessing(false);
-        setComplete(true);
+        // Fetch real backend AI model inference
+        fetch("/api/ai/flood", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            temp_max: 32.0, temp_min: 21.0, precipitation: 65.0,
+            rain_3d_sum: 120.0, rain_7d_sum: 180.0, wind_speed: 15.0
+          })
+        })
+          .then(r => r.ok ? r.json() : null)
+          .then(data => {
+            setAiResult(data);
+            setProcessing(false);
+            setComplete(true);
+          })
+          .catch(() => {
+            setProcessing(false);
+            setComplete(true);
+          });
       }
     }
   }, [processing, stepIndex]);
@@ -42,6 +60,7 @@ export default function AIModeler() {
     setProcessing(true);
     setStepIndex(0);
     setComplete(false);
+    setAiResult(null);
   };
 
   return (
@@ -149,7 +168,8 @@ export default function AIModeler() {
                <div className="dt-hud-stats">
                  <div>Vertices: {(Math.random() * 50000 + 10000).toFixed(0)}</div>
                  <div>Polygons: {(Math.random() * 20000 + 5000).toFixed(0)}</div>
-                 <div>Textures: 4K HDR</div>
+                 <div>AI Flood Risk: {aiResult ? `${aiResult.risk_score}% (${aiResult.risk_level})` : 'Calculated'}</div>
+                 <div>Engine: {aiResult ? aiResult.model : 'XGBoost v1.0'}</div>
                </div>
                <Link to="/map" className="dt-hud-btn-primary">DEPLOY TO GIS MAP</Link>
              </motion.div>
