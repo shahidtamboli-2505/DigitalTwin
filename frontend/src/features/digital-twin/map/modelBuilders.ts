@@ -26,7 +26,7 @@ const noise = (ctx: CanvasRenderingContext2D, s: number, amt: number) => {
   const img = ctx.getImageData(0, 0, s, s);
   for (let i = 0; i < img.data.length; i += 4) {
     const n = (Math.random() - 0.5) * amt;
-    img.data[i] += n; img.data[i + 1] += n; img.data[i + 2] += n;
+    img.data[i] = (img.data[i] ?? 0) + n; img.data[i + 1] = (img.data[i + 1] ?? 0) + n; img.data[i + 2] = (img.data[i + 2] ?? 0) + n;
   }
   ctx.putImageData(img, 0, 0);
 };
@@ -116,7 +116,8 @@ function addTraffic(g: THREE.Group, length: number, deckY: number, lanes: [numbe
 export function buildArchBridge(lengthM = 160, risk = 78) {
   const g = new THREE.Group();
   const spans = 7, spanW = lengthM / spans, width = 14, deck = 10, base = -10, r = spanW * 0.4;
-  const spanRisk = [risk - 30, risk - 20, risk - 12, Math.min(99, risk + 14), risk - 8, risk - 18, risk - 32];
+  const spanRiskArr = [risk - 30, risk - 20, risk - 12, Math.min(99, risk + 14), risk - 8, risk - 18, risk - 32];
+  const spanRisk = (i: number): number => spanRiskArr[i] ?? risk;
   const stone = stoneTex();
 
   for (let i = 0; i < spans; i++) {
@@ -127,7 +128,7 @@ export function buildArchBridge(lengthM = 160, risk = 78) {
     s.lineTo(r, base); s.lineTo(r, 0.5); s.absarc(0, 0.5, r, 0, Math.PI, false); s.lineTo(-r, base); s.closePath();
     const geo = new THREE.ExtrudeGeometry(s, { depth: width - 2, bevelEnabled: false, curveSegments: 32 });
     geo.translate(cx, 0, -(width - 2) / 2);
-    const body = new THREE.Mesh(geo, mat("#c9b79c", spanRisk[i], { tex: stone, rep: [0.12, 0.12] }));
+    const body = new THREE.Mesh(geo, mat("#c9b79c", spanRisk(i), { tex: stone, rep: [0.12, 0.12] }));
     body.castShadow = body.receiveShadow = true; g.add(body);
     // voussoir arch ring, proud of both faces
     const ring = new THREE.Shape();
@@ -135,19 +136,19 @@ export function buildArchBridge(lengthM = 160, risk = 78) {
     [width / 2 - 1, -width / 2 + 0.6].forEach((z) => {
       const rg = new THREE.ExtrudeGeometry(ring, { depth: 0.4, bevelEnabled: false, curveSegments: 32 });
       rg.translate(cx, 0, z);
-      g.add(new THREE.Mesh(rg, mat("#a8927a", spanRisk[i], { tex: stone, rep: [0.3, 0.3] })));
+      g.add(new THREE.Mesh(rg, mat("#a8927a", spanRisk(i), { tex: stone, rep: [0.3, 0.3] })));
     });
   }
   // piers: cutwaters + damp/water-stain band
   for (let i = 1; i < spans; i++) {
     const x = -lengthM / 2 + i * spanW;
     [width / 2, -width / 2].forEach((z) => {
-      const cw = new THREE.Mesh(new THREE.CylinderGeometry(2.1, 2.3, 13, 4), mat("#9d8a72", spanRisk[i], { tex: stone, rep: [1, 2] }));
+      const cw = new THREE.Mesh(new THREE.CylinderGeometry(2.1, 2.3, 13, 4), mat("#9d8a72", spanRisk(i), { tex: stone, rep: [1, 2] }));
       cw.position.set(x, base + 6.5, z); cw.rotation.y = Math.PI / 4; cw.castShadow = true; g.add(cw);
-      const cap = new THREE.Mesh(new THREE.ConeGeometry(2.3, 2.5, 4), mat("#8c7a63", spanRisk[i]));
+      const cap = new THREE.Mesh(new THREE.ConeGeometry(2.3, 2.5, 4), mat("#8c7a63", spanRisk(i)));
       cap.position.set(x, base + 14.2, z); cap.rotation.y = Math.PI / 4; g.add(cap);
     });
-    g.add(box(spanW * 0.2 + 1, 4, width + 0.2, mat("#4a3f33", spanRisk[i], { transparent: true, opacity: 0.55 }), x, base + 1, 0));
+    g.add(box(spanW * 0.2 + 1, 4, width + 0.2, mat("#4a3f33", spanRisk(i), { transparent: true, opacity: 0.55 }), x, base + 1, 0));
   }
   // deck: cornice, asphalt road, footpaths, parapets with balusters, lamps
   g.add(box(lengthM + 2, 0.8, width + 1.2, mat("#bfae94", risk - 15, { tex: stone, rep: [12, 1] }), 0, deck - 0.8, 0));

@@ -329,7 +329,7 @@ function CameraRig() {
     camera.position.set(600, 400, 700); // start far away -> fly-in
   }, [camera]);
   useEffect(() => {
-    const p = PRESETS[target] ?? PRESETS.overview;
+    const p = PRESETS[target] ?? PRESETS["overview"]!;
     ref.current?.setLookAt(...p, true);
   }, [target]);
   return <CameraControls ref={ref} maxPolarAngle={Math.PI / 2.05} minDistance={8} maxDistance={900} smoothTime={0.9} />;

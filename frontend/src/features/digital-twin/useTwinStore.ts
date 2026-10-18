@@ -40,7 +40,7 @@ export const useTwinStore = create<TwinState>((set, get) => ({
     set((st) => {
       const sensors = st.sensors.map((s) => {
         if (replayIndex !== null && s.id === "krishna-irwin") {
-          return { ...s, value: FLOOD_2019[replayIndex] };
+          return { ...s, value: FLOOD_2019[replayIndex] ?? s.value };
         }
         return walk(s);
       });

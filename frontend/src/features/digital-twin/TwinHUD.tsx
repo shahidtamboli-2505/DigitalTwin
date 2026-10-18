@@ -28,7 +28,7 @@ function Spark({ data, color }: { data: number[]; color: string }) {
 
 export function TwinHUD() {
   const { mode, setMode, setCamera, cameraTarget, selected, sensors, history, replayIndex, startReplay } = useTwinStore();
-  const asset = ASSETS.find((a) => a.id === selected) ?? ASSETS[0];
+  const asset = ASSETS.find((a) => a.id === selected) ?? ASSETS[0]!;
   const shs = 100 - asset.risk; // Structural Health Score
   const krishna = sensors.find((s) => s.id === "krishna-irwin")!;
   const alerts = [

@@ -116,7 +116,7 @@ export function IrwinBridge() {
       {Array.from({ length: SPANS - 1 }).map((_, i) => {
         const x = -length / 2 + (i + 1) * SPAN_W;
         return [WIDTH / 2, -WIDTH / 2].map((z) => (
-          <Part key={`${i}-${z}`} geometry={cutwater} color="#a8957c" risk={SPAN_RISK[i]}
+          <Part key={`${i}-${z}`} geometry={cutwater} color="#a8957c" risk={SPAN_RISK[i] ?? 60}
             position={[x, BASE_Y + 6, z]} rotation={[0, Math.PI / 4, 0]} />
         ));
       })}
