@@ -1,0 +1,127 @@
+/* ==========================================================================
+   PRO THEME — "Mission Control" look for the Sangli Digital Twin
+   Loaded by DashboardLayout. Scoped under .pro so nothing else is affected.
+   ========================================================================== */
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap");
+
+.pro {
+  --bg-0: #05080f;
+  --bg-1: #0a1020;
+  --bg-2: #0f1830;
+  --line: rgba(120, 180, 255, 0.12);
+  --line-strong: rgba(34, 211, 238, 0.35);
+  --text-1: #e6f1ff;
+  --text-2: #94a6c3;
+  --text-3: #5c6f8e;
+  --cyan: #22d3ee;
+  --teal: #2ee6a6;
+  --amber: #ffb020;
+  --red: #ff3b4e;
+  /* old variables used by existing pages, remapped */
+  --bg-primary: var(--bg-0);
+  --bg-secondary: var(--bg-1);
+  --border: var(--line);
+  --text-primary: var(--text-1);
+  --text-muted: var(--text-3);
+
+  font-family: "Inter", system-ui, sans-serif;
+  color: var(--text-1);
+  background:
+    radial-gradient(1200px 600px at 85% -10%, rgba(34, 211, 238, 0.08), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgba(46, 230, 166, 0.06), transparent 60%),
+    var(--bg-0);
+  min-height: 100vh;
+}
+/* faint engineering grid behind everything */
+.pro::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(120, 180, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120, 180, 255, 0.035) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse at center, #000 40%, transparent 85%);
+  z-index: 0;
+}
+.pro .font-display { font-family: "Space Grotesk", "Inter", sans-serif; letter-spacing: -0.01em; }
+.pro .font-mono, .pro code { font-family: "JetBrains Mono", ui-monospace, monospace; }
+
+/* ---------- glass panel ---------- */
+.pro .glass {
+  position: relative;
+  background: linear-gradient(180deg, rgba(20, 32, 60, 0.65), rgba(10, 16, 32, 0.75));
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 20px 40px -24px rgba(0, 0, 0, 0.8);
+  transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+}
+.pro .glass::after {               /* thin cyan highlight on the top edge */
+  content: "";
+  position: absolute;
+  left: 16px; right: 16px; top: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.55), transparent);
+  opacity: 0.6;
+}
+.pro .glass-hover:hover {
+  border-color: var(--line-strong);
+  transform: translateY(-2px);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 24px 48px -20px rgba(34, 211, 238, 0.18);
+}
+
+/* ---------- existing dt-* pages get the same look ---------- */
+.pro .dt-card,
+.pro .dt-prediction-card,
+.pro .dt-weather-strip,
+.pro .dt-ai-summary-strip {
+  background: linear-gradient(180deg, rgba(20, 32, 60, 0.65), rgba(10, 16, 32, 0.75)) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 16px !important;
+  backdrop-filter: blur(14px);
+  transition: border-color 0.3s, transform 0.3s;
+}
+.pro .dt-card:hover, .pro .dt-prediction-card:hover { border-color: var(--line-strong) !important; transform: translateY(-2px); }
+.pro .dt-page-title { font-family: "Space Grotesk", sans-serif !important; letter-spacing: -0.02em; }
+.pro .dt-card-title { font-family: "Space Grotesk", sans-serif !important; font-weight: 600; }
+.pro .dt-page { position: relative; z-index: 1; }
+
+/* ---------- animated live dot ---------- */
+.pro .live-dot { position: relative; width: 8px; height: 8px; border-radius: 9999px; background: var(--teal); }
+.pro .live-dot::after {
+  content: ""; position: absolute; inset: -4px; border-radius: 9999px;
+  border: 2px solid var(--teal); animation: pro-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+@keyframes pro-ping { 0% { transform: scale(0.6); opacity: 1; } 100% { transform: scale(2.2); opacity: 0; } }
+
+/* ---------- scanning sweep (used on the 3D twin card) ---------- */
+.pro .scan-sweep { overflow: hidden; }
+.pro .scan-sweep::before {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(34, 211, 238, 0.14) 50%, transparent 70%);
+  transform: translateX(-100%); animation: pro-sweep 3.5s ease-in-out infinite;
+}
+@keyframes pro-sweep { to { transform: translateX(100%); } }
+
+/* ---------- credit badge shimmer ---------- */
+.pro .credit-shimmer {
+  background: linear-gradient(90deg, #67e8f9, #a5f3fc, #2ee6a6, #67e8f9);
+  background-size: 300% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: pro-shimmer 6s linear infinite;
+}
+@keyframes pro-shimmer { to { background-position: 300% 0; } }
+
+/* ---------- scrollbars ---------- */
+.pro ::-webkit-scrollbar { width: 8px; height: 8px; }
+.pro ::-webkit-scrollbar-thumb { background: rgba(120, 180, 255, 0.18); border-radius: 8px; }
+.pro ::-webkit-scrollbar-track { background: transparent; }
+
+/* map controls match the theme */
+.pro .maplibregl-ctrl-group { background: rgba(10, 16, 32, 0.85) !important; border: 1px solid var(--line); }
+.pro .maplibregl-ctrl-group button span { filter: invert(1); }
+
+@media (prefers-reduced-motion: reduce) {
+  .pro *, .pro *::before, .pro *::after { animation: none !important; transition: none !important; }
+}

@@ -1,0 +1,21 @@
+{
+  "type": "FeatureCollection",
+  "name": "sangli_critical_assets",
+  "_note": "Seed file. Coordinates are approximate; run tools/fetch_osm_sangli.py to refresh from OpenStreetMap and verify on the satellite view.",
+  "features": [
+    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [74.5577, 16.8628] },
+      "properties": { "id": "irwin", "name": "Irwin Bridge (Krishna)", "type": "bridge", "tehsil": "Miraj", "risk": 78, "condition": "poor", "built": 1929, "bearing": 60, "length_m": 160, "sensors": ["krishna-irwin", "irwin-vib", "irwin-strain"] } },
+    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [73.7686, 17.1906] },
+      "properties": { "id": "chandoli", "name": "Chandoli Dam (Warna)", "type": "dam", "tehsil": "Shirala", "risk": 40, "condition": "fair", "built": 2001, "bearing": 0, "length_m": 1200, "sensors": ["chandoli-level"] } },
+    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [74.5703, 16.8556] },
+      "properties": { "id": "civil", "name": "Civil Hospital Sangli", "type": "hospital", "tehsil": "Miraj", "risk": 30, "condition": "good", "built": 1985, "bearing": 15, "sensors": [] } },
+    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [74.6464, 16.8231] },
+      "properties": { "id": "wanless", "name": "Wanless Hospital Miraj", "type": "hospital", "tehsil": "Miraj", "risk": 34, "condition": "fair", "built": 1894, "bearing": 0, "sensors": [] } },
+    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [74.6043, 16.8402] },
+      "properties": { "id": "willingdon", "name": "Willingdon College", "type": "college", "tehsil": "Miraj", "risk": 22, "condition": "good", "built": 1919, "bearing": 0, "sensors": [] } },
+    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [74.2610, 17.0490] },
+      "properties": { "id": "islampur-grid", "name": "Islampur Power Grid", "type": "substation", "tehsil": "Walwa", "risk": 38, "condition": "fair", "built": 1998, "bearing": 0, "sensors": [] } },
+    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [74.6390, 16.8300] },
+      "properties": { "id": "miraj-water", "name": "Miraj Water Supply Scheme", "type": "water", "tehsil": "Miraj", "risk": 42, "condition": "fair", "built": 1976, "bearing": 0, "sensors": [] } }
+  ]
+}
