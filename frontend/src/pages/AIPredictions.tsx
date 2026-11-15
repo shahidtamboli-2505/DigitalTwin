@@ -33,7 +33,7 @@ export default function AIPredictions() {
           <p className="text-sm text-slate-400">Multi-hazard scenario outlook for Sangli District</p>
         </div>
         <span className="flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 text-xs text-amber-300">
-          <Info size={13} /> Illustrative scenarios · RF/XGBoost models in progress
+          <Info size={13} /> Scenario outlook · live XGBoost flood model on the Year Analysis page
         </span>
       </motion.div>
 

@@ -15,8 +15,9 @@ A production-ready Digital Twin platform that creates digital representations of
 
 ### Key Features
 
-- 🗺️ **GIS Visualization** — 2D (MapLibre) + 3D (CesiumJS) maps with 12+ data layers
-- 🤖 **AI Models** — Crack detection (YOLO11), Flood prediction (XGBoost), Time-series forecasting (LSTM)
+- 🗺️ **GIS Visualization** — 2D MapLibre map with OSM-sourced assets and a Three.js 3D digital twin (any year's flood can be replayed on the twin)
+- 🤖 **AI Models** — Flood-risk prediction (XGBoost, trained on 26 years of daily climate data) and crack classification (OpenCV features + scikit-learn)
+- 📅 **Year Analysis** — pick any year from 2000 to today: rainfall, estimated Krishna river level, AI flood probability, district health index, per-asset infrastructure health and year-vs-year comparison
 - 🏗️ **Digital Twin** — Real-time sensor monitoring with simulated IoT data
 - 🚨 **Alert System** — Multi-channel notifications with escalation workflows
 - 📊 **Analytics** — Enterprise dashboard with interactive charts and KPIs
@@ -34,7 +35,7 @@ Backend (FastAPI + Python)
 │ + PostGIS   │  (Documents) │  (Cache)   │
 └─────────────┴──────────────┴────────────┘
     ↕
-AI Engine (YOLO11 + XGBoost + LSTM + Gemini)
+AI Engine (XGBoost flood model + OpenCV/sklearn crack classifier)
 ```
 
 ## 🚀 Quick Start
@@ -59,7 +60,33 @@ uvicorn app.main:app --reload
 cd frontend
 npm install
 npm run dev
+
+# 5. AI data pipeline (run from the project root, needs internet once)
+python ai/training/build_yearly_dataset.py   # downloads 2000-today daily climate -> ai/datasets/weather/
+python ai/training/train_flood_model.py      # trains XGBoost -> ai/models/flood_xgboost.joblib + metrics
+python ai/training/build_yearly_dataset.py   # re-score every year with the trained model
 ```
+
+## 📊 Multi-year climate & flood dataset
+
+`ai/training/build_yearly_dataset.py` downloads daily ERA5 reanalysis (Open-Meteo archive) for
+Sangli **and** the upper Krishna catchment (Mahabaleshwar/Koyna) for every year from 2000 to the
+current year, then produces `ai/datasets/weather/sangli_yearly.json` (also copied to
+`frontend/public/data/` so the UI works without a backend). Per year it contains:
+
+| Field | Meaning |
+|-------|---------|
+| `rainfall_total_mm`, `monthly_rain_mm` | local rainfall, total and per month |
+| `catchment_rain_mm` | upstream Ghat rainfall that drives the Krishna gauge |
+| `river_peak_m` | estimated gauge at Irwin Bridge: `9.5 + k × basin 7-day rain`, calibrated to the observed Aug-2019 peak (22.8 m) |
+| `flood_risk_days` | days above ERA5-scaled IMD thresholds (35 mm/day, 70 mm/3-day, 130 mm/7-day) |
+| `flood_prob_max` | highest daily probability from the XGBoost model |
+| `risk_score` / `health_index` | `risk = 50·river + 25·flood-days + 15·AI prob + 10·heat`, `health = 100 − risk` |
+| `severity` | catastrophic ≥ 60 · severe ≥ 45 · moderate ≥ 25 · minor |
+| `hydrograph`, `daily` | ±7-day peak window and the full daily series |
+
+Backend endpoints: `GET /api/analytics/years`, `GET /api/analytics/years/{year}`,
+`GET /api/analytics/years/{a}/compare/{b}`, `GET /api/analytics/flood-history`, `GET /api/ai/models`.
 
 ## 📁 Project Structure
 
@@ -81,7 +108,7 @@ digital-twin-sangli/
 | Frontend | React, TypeScript, Vite, TailwindCSS, MapLibre, CesiumJS, Recharts |
 | Backend | Python, FastAPI, SQLAlchemy 2, Alembic, Celery |
 | Database | PostgreSQL + PostGIS, MongoDB, Redis |
-| AI/ML | YOLO11, XGBoost, LSTM, Gemini API, OpenCV |
+| AI/ML | XGBoost, scikit-learn, OpenCV, pandas (Open-Meteo ERA5 data) |
 | DevOps | Docker, GitHub Actions, Vercel, Render |
 
 ## 📄 License

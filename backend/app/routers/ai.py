@@ -12,7 +12,9 @@ import pandas as pd
 
 router = APIRouter(prefix="/api/ai", tags=["AI Models"])
 
-MODEL_PATH = "ai/models/flood_xgboost.joblib"
+from app.core.datasets import AI_DIR, FLOOD_MODEL_PATH, load_flood_metrics
+
+MODEL_PATH = str(FLOOD_MODEL_PATH)   # absolute: independent of the working directory
 _flood_model = None
 
 def get_flood_model():
@@ -21,10 +23,25 @@ def get_flood_model():
         if not os.path.exists(MODEL_PATH):
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Flood prediction model not trained yet"
+                detail="Flood prediction model not trained yet. Run: python ai/training/train_flood_model.py"
             )
         _flood_model = joblib.load(MODEL_PATH)
     return _flood_model
+
+
+@router.get("/models")
+async def model_status():
+    """Which AI models are available on this server, with their evaluation metrics."""
+    return {
+        "flood_xgboost": {
+            "available": os.path.exists(MODEL_PATH),
+            "path": MODEL_PATH,
+            "metrics": load_flood_metrics(),
+        },
+        "crack_classifier": {
+            "available": (AI_DIR / "models" / "crack_classifier.joblib").exists(),
+        },
+    }
 
 
 class FloodPredictRequest(BaseModel):
@@ -84,7 +101,7 @@ from fastapi import UploadFile, File
 import cv2
 import numpy as np
 
-CRACK_MODEL_PATH = "ai/models/crack_classifier.joblib"
+CRACK_MODEL_PATH = str(AI_DIR / "models" / "crack_classifier.joblib")
 _crack_model = None
 
 def get_crack_model():

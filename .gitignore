@@ -38,6 +38,7 @@ ai/models/**/*.joblib
 ai/datasets/**/*.zip
 ai/datasets/**/*.tar.gz
 !ai/models/**/.gitkeep
+!ai/models/flood_xgboost.joblib
 
 # Raster data (large)
 data/raster/**/*.tif
@@ -56,3 +57,8 @@ htmlcov/
 
 # Uploads
 uploads/
+
+# Build artifacts / logs
+*.tsbuildinfo
+*errors*.txt
+*.bak

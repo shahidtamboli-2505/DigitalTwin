@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  LayoutDashboard, Map, Waves, Building2, Radio, Brain, Bell, FileText,
+  LayoutDashboard, Map, Waves, Building2, Radio, Brain, Bell, FileText, CalendarRange,
   ChevronLeft, ChevronRight, Menu, X, Search, BellRing, Hexagon, Code2,
 } from "lucide-react";
 import { ALERTS } from "../data/sangli-district";
@@ -21,6 +21,7 @@ const NAV_GROUPS = [
   ] },
   { title: "Intelligence", items: [
     { to: "/ai-predictions", icon: Brain, label: "AI Predictions" },
+    { to: "/history", icon: CalendarRange, label: "Year Analysis" },
     { to: "/reports", icon: FileText, label: "Reports" },
   ] },
 ];

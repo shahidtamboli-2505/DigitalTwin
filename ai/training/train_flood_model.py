@@ -1,105 +1,92 @@
 """
-Train XGBoost Flood Risk Prediction Model using real Open-Meteo historical climate data for Sangli.
+Train the XGBoost Flood-Risk model for Sangli on the full multi-year
+Open-Meteo dataset (ai/datasets/weather/sangli_daily.csv).
+
+If the CSV is missing it is downloaded by build_yearly_dataset.fetch_daily().
+
+Run from the project root:
+    python ai/training/train_flood_model.py
+Outputs:
+    ai/models/flood_xgboost.joblib        - {"model", "features", "metrics"}
+    ai/evaluation/flood_model_metrics.json - held-out metrics for the report
 """
 
-import os
-import sys
+from __future__ import annotations
+
 import json
-import httpx
-import numpy as np
-import pandas as pd
+import sys
+from pathlib import Path
+
 import joblib
+import pandas as pd
+from sklearn.metrics import classification_report, roc_auc_score, f1_score, precision_score, recall_score
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report, roc_auc_score
 from xgboost import XGBClassifier
 
-# Sangli District Coordinates
-SANGLI_LAT = 16.8524
-SANGLI_LON = 74.5815
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from build_yearly_dataset import (  # noqa: E402
+    DAILY_CSV, FEATURES, MODEL_PATH, START_YEAR, END_YEAR, engineer, fetch_daily,
+)
 
-def fetch_open_meteo_data():
-    """Fetch daily historical climate data for Sangli from Open-Meteo API (2018 to 2023)."""
-    url = (
-        f"https://archive-api.open-meteo.com/v1/archive?"
-        f"latitude={SANGLI_LAT}&longitude={SANGLI_LON}&"
-        f"start_date=2018-01-01&end_date=2023-12-31&"
-        f"daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,rain_sum,wind_speed_10m_max&"
-        f"timezone=Asia%2FKolkata"
-    )
-    print(f"Fetching Open-Meteo climate dataset from: {url}...")
-    with httpx.Client(timeout=30.0) as client:
-        res = client.get(url)
-        res.raise_for_status()
-        data = res.json()
-
-    daily = data["daily"]
-    df = pd.DataFrame({
-        "date": daily["time"],
-        "temp_max": daily["temperature_2m_max"],
-        "temp_min": daily["temperature_2m_min"],
-        "precipitation": daily["precipitation_sum"],
-        "rain": daily["rain_sum"],
-        "wind_speed": daily["wind_speed_10m_max"],
-    })
-    return df
+ROOT = Path(__file__).resolve().parents[2]
+METRICS_PATH = ROOT / "ai" / "evaluation" / "flood_model_metrics.json"
 
 
-def preprocess_and_engineer_features(df: pd.DataFrame):
-    """Engineers rolling rainfall features (3-day, 7-day cumulative) and defines flood risk target."""
-    df["precipitation"] = df["precipitation"].fillna(0.0)
-    df["rain"] = df["rain"].fillna(0.0)
-    df["temp_max"] = df["temp_max"].fillna(30.0)
-    df["wind_speed"] = df["wind_speed"].fillna(10.0)
-
-    # Feature engineering: rolling cumulative rainfall
-    df["rain_3d_sum"] = df["precipitation"].rolling(window=3, min_periods=1).sum()
-    df["rain_7d_sum"] = df["precipitation"].rolling(window=7, min_periods=1).sum()
-    df["temp_range"] = df["temp_max"] - df["temp_min"]
-
-    # Target labeling based on Sangli hydrological thresholds:
-    # High Flood Risk (1) if 1-day precip > 75mm OR 3-day accum precip > 140mm
-    df["flood_risk"] = ((df["precipitation"] > 75.0) | (df["rain_3d_sum"] > 140.0)).astype(int)
-
-    return df
+def load_dataset() -> pd.DataFrame:
+    if DAILY_CSV.exists():
+        print(f"Loading {DAILY_CSV}")
+        df = pd.read_csv(DAILY_CSV, parse_dates=["date"])
+    else:
+        DAILY_CSV.parent.mkdir(parents=True, exist_ok=True)
+        df = fetch_daily(START_YEAR, END_YEAR)
+        df.to_csv(DAILY_CSV, index=False)
+    return engineer(df)
 
 
-def train_model():
-    df = fetch_open_meteo_data()
-    df = preprocess_and_engineer_features(df)
+def train_model() -> None:
+    df = load_dataset()
+    print(f"Dataset: {len(df)} days, {df['year'].min()}-{df['year'].max()}")
+    print(f"Flood-risk days: {int(df['flood_risk'].sum())} / {len(df)}")
 
-    print(f"Dataset shape: {df.shape}")
-    print(f"Flood risk events count: {df['flood_risk'].sum()} / {len(df)}")
-
-    features = ["temp_max", "temp_min", "precipitation", "rain_3d_sum", "rain_7d_sum", "wind_speed", "temp_range"]
-    X = df[features]
-    y = df["flood_risk"]
-
+    X, y = df[FEATURES], df["flood_risk"]
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
 
     model = XGBClassifier(
-        n_estimators=100,
+        n_estimators=200,
         max_depth=4,
         learning_rate=0.05,
-        scale_pos_weight=max(1, (len(y) - y.sum()) / max(1, y.sum())), # Handle class imbalance
+        subsample=0.9,
+        colsample_bytree=0.9,
+        scale_pos_weight=max(1.0, (len(y) - y.sum()) / max(1, y.sum())),
         random_state=42,
-        eval_metric="logloss"
+        eval_metric="logloss",
     )
-
     model.fit(X_train, y_train)
 
     y_pred = model.predict(X_test)
     y_prob = model.predict_proba(X_test)[:, 1]
-
-    print("\nModel Evaluation Report:")
+    metrics = {
+        "train_years": f"{int(df['year'].min())}-{int(df['year'].max())}",
+        "n_samples": int(len(df)),
+        "n_positive": int(y.sum()),
+        "test_size": int(len(y_test)),
+        "roc_auc": round(float(roc_auc_score(y_test, y_prob)), 4),
+        "f1": round(float(f1_score(y_test, y_pred)), 4),
+        "precision": round(float(precision_score(y_test, y_pred)), 4),
+        "recall": round(float(recall_score(y_test, y_pred)), 4),
+        "feature_importance": {f: round(float(v), 4) for f, v in zip(FEATURES, model.feature_importances_)},
+    }
+    print("\nEvaluation (held-out 20%):")
     print(classification_report(y_test, y_pred))
-    print(f"ROC-AUC Score: {roc_auc_score(y_test, y_prob):.4f}")
+    print(json.dumps(metrics, indent=2))
 
-    # Save model and feature list
-    output_dir = "ai/models"
-    os.makedirs(output_dir, exist_ok=True)
-    model_path = os.path.join(output_dir, "flood_xgboost.joblib")
-    joblib.dump({"model": model, "features": features}, model_path)
-    print(f"\n✅ Flood risk model successfully saved to: {model_path}")
+    MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
+    joblib.dump({"model": model, "features": FEATURES, "metrics": metrics}, MODEL_PATH)
+    METRICS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    METRICS_PATH.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
+    print(f"\n[OK] model   -> {MODEL_PATH}")
+    print(f"[OK] metrics -> {METRICS_PATH}")
+
 
 if __name__ == "__main__":
     train_model()

@@ -12,6 +12,8 @@ import {
 import { api } from "../lib/api";
 import { TEHSILS, FLOOD_HISTORY as MOCK_FLOOD, WEATHER_DATA as MOCK_WEATHER, ALERTS, SENSORS } from "../data/sangli-district";
 import { CountUp, Stagger, Panel, Ring, panelVariants, chartTooltip, axisTick } from "../components/pro/ProUI";
+import { loadYearly, SEVERITY_COLOR } from "../lib/yearly";
+import type { YearRecord } from "../lib/yearly";
 
 const band = (s: number) =>
   s >= 70 ? { label: "Critical", color: "#ff3b4e" } : s >= 50 ? { label: "High", color: "#ffb020" } : s >= 30 ? { label: "Medium", color: "#ffe066" } : { label: "Low", color: "#2ee6a6" };
@@ -24,17 +26,22 @@ export default function Dashboard() {
     sensors_warning: 1, sensors_offline: 1, active_alerts: 5, high_alerts: 2,
   });
   const [weatherData, setWeatherData] = useState(MOCK_WEATHER);
-  const [floodHistory, setFloodHistory] = useState(MOCK_FLOOD);
+  const [years, setYears] = useState<YearRecord[]>([]);
 
   useEffect(() => {
     api.get("/api/analytics/summary").then((r) => r.data && setSummary(r.data)).catch(() => undefined);
     api.get("/api/analytics/climate").then((r) => r.data && setWeatherData(r.data)).catch(() => undefined);
-    api.get("/api/analytics/flood-history").then((r) => r.data && setFloodHistory(r.data)).catch(() => undefined);
+    loadYearly().then((d) => setYears(d.years)).catch(() => undefined);
   }, []);
 
   const tehsils = [...TEHSILS].sort((a, b) => b.risk_score - a.risk_score);
-  const floodData = [...floodHistory].sort((a, b) => a.year - b.year).filter((f) => f.year >= 2000)
-    .map((f) => ({ year: f.year, affected: Math.round(f.affected_population / 1000), rainfall: f.rainfall_mm }));
+  const documented = new Map(MOCK_FLOOD.map((f) => [f.year, f]));
+  // every year of the climate dataset; falls back to the documented events until the JSON loads
+  const floodData = years.length
+    ? years.map((y) => ({ year: y.year, rainfall: y.rainfall_total_mm, health: y.health_index, sev: y.severity, affected: documented.get(y.year)?.affected_population }))
+    : [...MOCK_FLOOD].filter((f) => f.year >= 2000).sort((a, b) => a.year - b.year)
+        .map((f) => ({ year: f.year, rainfall: f.rainfall_mm, health: undefined, sev: f.severity, affected: f.affected_population }));
+  const floodRange = floodData.length ? `${floodData[0]!.year}–${floodData[floodData.length - 1]!.year}` : "";
   const riskDist = [
     { name: "Low", value: TEHSILS.filter((t) => t.risk_score < 30).length, color: "#2ee6a6" },
     { name: "Medium", value: TEHSILS.filter((t) => t.risk_score >= 30 && t.risk_score < 50).length, color: "#ffe066" },
@@ -128,21 +135,28 @@ export default function Dashboard() {
       </motion.div>
 
       {/* ===== charts ===== */}
-      <Panel className="xl:col-span-7" kicker="Disaster records" title="Flood history 2005–2023">
+      <Panel className="xl:col-span-7" kicker="Climate & flood dataset" title={`Annual rainfall & district health ${floodRange}`}
+        action={<button onClick={() => navigate("/history")} className="text-xs text-cyan-300 hover:underline">Analyse any year →</button>}>
         <div className="h-64">
           <ResponsiveContainer>
             <ComposedChart data={floodData} margin={{ top: 5, right: 8, left: -18, bottom: 0 }}>
-              <defs>
-                <linearGradient id="gAff" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#ff3b4e" stopOpacity={0.9} /><stop offset="100%" stopColor="#ff3b4e" stopOpacity={0.15} /></linearGradient>
-              </defs>
               <CartesianGrid strokeDasharray="3 6" stroke="rgba(120,180,255,0.08)" vertical={false} />
-              <XAxis dataKey="year" tick={axisTick} axisLine={false} tickLine={false} />
-              <YAxis tick={axisTick} axisLine={false} tickLine={false} />
+              <XAxis dataKey="year" tick={axisTick} axisLine={false} tickLine={false} interval={years.length ? 2 : 0} />
+              <YAxis yAxisId="l" tick={axisTick} axisLine={false} tickLine={false} />
+              <YAxis yAxisId="r" orientation="right" tick={axisTick} axisLine={false} tickLine={false} domain={[0, 100]} hide={!years.length} />
               <Tooltip contentStyle={chartTooltip} cursor={{ fill: "rgba(34,211,238,0.05)" }} />
-              <Bar dataKey="affected" name="Affected (thousand)" fill="url(#gAff)" radius={[6, 6, 0, 0]} barSize={34} />
-              <Line type="monotone" dataKey="rainfall" name="Rainfall (mm)" stroke="#22d3ee" strokeWidth={2.5} dot={{ r: 4, fill: "#05080f", stroke: "#22d3ee", strokeWidth: 2 }} />
+              <Bar yAxisId="l" dataKey="rainfall" name="Rainfall (mm)" radius={[5, 5, 0, 0]} barSize={years.length ? 14 : 34}
+                onClick={(d: { year?: number }) => d.year && navigate("/history")} cursor="pointer">
+                {floodData.map((d) => <Cell key={d.year} fill={SEVERITY_COLOR[d.sev]} fillOpacity={0.8} />)}
+              </Bar>
+              {years.length > 0 && <Line yAxisId="r" type="monotone" dataKey="health" name="Health index" stroke="#2ee6a6" strokeWidth={2} dot={{ r: 2.5, fill: "#2ee6a6" }} />}
             </ComposedChart>
           </ResponsiveContainer>
+        </div>
+        <div className="mt-2 flex flex-wrap gap-3 text-[10px] text-slate-500">
+          {(Object.keys(SEVERITY_COLOR) as (keyof typeof SEVERITY_COLOR)[]).map((s) => (
+            <span key={s} className="flex items-center gap-1 capitalize"><span className="h-2 w-2 rounded-sm" style={{ background: SEVERITY_COLOR[s] }} />{s}</span>
+          ))}
         </div>
       </Panel>
 

@@ -9,13 +9,16 @@ interface TwinState {
   history: Record<string, number[]>;
   mode: ViewMode;
   selected: string | null;
-  replayIndex: number | null;   // index into FLOOD_2019 when replay running
+  replayIndex: number | null;   // index into replayLevels when replay running
+  replayYear: number;           // which year's hydrograph is being replayed
+  replayLevels: number[];       // daily Krishna gauge levels (m) for the replay
+  replayDates: string[];        // matching ISO dates (empty for the built-in 2019 curve)
   cameraTarget: string;         // preset name
   tick: () => void;
   setMode: (m: ViewMode) => void;
   select: (id: string | null) => void;
   setCamera: (p: string) => void;
-  startReplay: () => void;
+  startReplay: (year?: number, levels?: number[], dates?: string[]) => void;
   stepReplay: () => void;
 }
 
@@ -34,13 +37,25 @@ export const useTwinStore = create<TwinState>((set, get) => ({
   mode: "realistic",
   selected: "irwin",
   replayIndex: null,
+  replayYear: 2019,
+  replayLevels: FLOOD_2019,
+  replayDates: [],
   cameraTarget: "bridge",
   tick: () => {
-    const { replayIndex } = get();
+    const { replayIndex, replayLevels } = get();
     set((st) => {
       const sensors = st.sensors.map((s) => {
         if (replayIndex !== null && s.id === "krishna-irwin") {
-          return { ...s, value: FLOOD_2019[replayIndex] ?? s.value };
+          const level = replayLevels[replayIndex] ?? s.value;
+          return { ...s, value: level };
+        }
+        // bridge vibration/strain rise with the flood load during a replay
+        if (replayIndex !== null && (s.id === "irwin-vib" || s.id === "irwin-strain")) {
+          const level = replayLevels[replayIndex] ?? 12;
+          const load = Math.max(0, (level - 12) / 12);            // 0 at 12 m, 1 at 24 m
+          const base = SENSORS.find((b) => b.id === s.id)!.value;
+          const target = s.id === "irwin-vib" ? base + load * 9 : base + load * 520;
+          return { ...s, value: +(s.value + (target - s.value) * 0.5 + (Math.random() - 0.5) * s.step).toFixed(2) };
         }
         return walk(s);
       });
@@ -54,12 +69,13 @@ export const useTwinStore = create<TwinState>((set, get) => ({
   setMode: (mode) => set({ mode }),
   select: (selected) => set({ selected }),
   setCamera: (cameraTarget) => set({ cameraTarget }),
-  startReplay: () => set({ replayIndex: 0, cameraTarget: "bridge" }),
+  startReplay: (year = 2019, levels = FLOOD_2019, dates = []) =>
+    set({ replayIndex: 0, replayYear: year, replayLevels: levels, replayDates: dates, cameraTarget: "bridge" }),
   stepReplay: () =>
     set((st) => {
       if (st.replayIndex === null) return {};
       const n = st.replayIndex + 1;
-      return { replayIndex: n >= FLOOD_2019.length ? null : n };
+      return { replayIndex: n >= st.replayLevels.length ? null : n };
     }),
 }));
 

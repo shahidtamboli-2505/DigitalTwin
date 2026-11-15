@@ -4,6 +4,8 @@ import { Activity, Box, Camera, Eye, Flame, Play, Radar, Waves, AlertTriangle } 
 import { useTwinStore, statusOf } from "./useTwinStore";
 import type { ViewMode } from "./useTwinStore";
 import { ASSETS, healthColor, FLOOD_2019 } from "./twinData";
+import { loadYearly, SEVERITY_COLOR } from "../../lib/yearly";
+import type { YearRecord } from "../../lib/yearly";
 
 const glass = "rounded-xl border border-cyan-400/25 bg-slate-950/70 backdrop-blur-md shadow-[0_0_24px_rgba(34,211,238,0.12)]";
 
@@ -27,7 +29,18 @@ function Spark({ data, color }: { data: number[]; color: string }) {
 }
 
 export function TwinHUD() {
-  const { mode, setMode, setCamera, cameraTarget, selected, sensors, history, replayIndex, startReplay } = useTwinStore();
+  const { mode, setMode, setCamera, cameraTarget, selected, sensors, history, replayIndex, replayYear, replayLevels, replayDates, startReplay } = useTwinStore();
+  const [years, setYears] = useState<YearRecord[]>([]);
+  const [pickYear, setPickYear] = useState(2019);
+  useEffect(() => { loadYearly().then((d) => setYears(d.years)).catch(() => undefined); }, []);
+  const picked = years.find((y) => y.year === pickYear);
+  const replay = () => {
+    if (picked) startReplay(picked.year, picked.hydrograph.map((h) => h.level), picked.hydrograph.map((h) => h.date));
+    else startReplay(2019, FLOOD_2019, []);
+  };
+  const replayDay = replayIndex !== null && replayDates[replayIndex]
+    ? new Date(replayDates[replayIndex] + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short" })
+    : replayIndex !== null ? `day ${replayIndex + 1}` : "";
   const asset = ASSETS.find((a) => a.id === selected) ?? ASSETS[0]!;
   const shs = 100 - asset.risk; // Structural Health Score
   const krishna = sensors.find((s) => s.id === "krishna-irwin")!;
@@ -130,10 +143,20 @@ export function TwinHUD() {
               <div className="h-full bg-gradient-to-r from-cyan-400 via-amber-400 to-red-500 transition-all" style={{ width: `${Math.min(100, (krishna.value / 24) * 100)}%` }} />
             </div>
             <div className="mt-1 flex justify-between text-[10px] text-slate-500"><span>warn 15 m</span><span>crit 18 m</span><span>2019: 22.8 m</span></div>
-            <button onClick={startReplay} disabled={replayIndex !== null}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-md bg-red-500/80 py-2 text-sm font-semibold hover:bg-red-500 disabled:opacity-60">
+            <div className="mt-3 flex items-center gap-2">
+              <select value={pickYear} onChange={(e) => setPickYear(+e.target.value)} disabled={replayIndex !== null}
+                className="flex-1 rounded-md bg-white/5 px-2 py-1.5 text-xs text-slate-100 ring-1 ring-white/10 focus:outline-none disabled:opacity-60"
+                style={{ borderLeft: `3px solid ${picked ? SEVERITY_COLOR[picked.severity] : "#ff3b4e"}` }}>
+                {years.length === 0 && <option value={2019}>2019 (built-in)</option>}
+                {years.map((y) => (
+                  <option key={y.year} value={y.year}>{y.year} · peak {y.river_peak_m} m · {y.severity}</option>
+                ))}
+              </select>
+            </div>
+            <button onClick={replay} disabled={replayIndex !== null}
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-md bg-red-500/80 py-2 text-sm font-semibold hover:bg-red-500 disabled:opacity-60">
               <Play className="h-4 w-4" />
-              {replayIndex === null ? "Replay 2019 flood" : `Replaying… day ${replayIndex + 1}/${FLOOD_2019.length}`}
+              {replayIndex === null ? `Replay ${pickYear} peak flood` : `Replaying ${replayYear} · ${replayDay} (${replayIndex + 1}/${replayLevels.length})`}
             </button>
           </div>
         </div>

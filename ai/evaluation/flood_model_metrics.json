@@ -1,0 +1,19 @@
+{
+  "train_years": "2000-2026",
+  "n_samples": 9810,
+  "n_positive": 181,
+  "test_size": 1962,
+  "roc_auc": 0.9995,
+  "f1": 0.96,
+  "precision": 0.9231,
+  "recall": 1.0,
+  "feature_importance": {
+    "temp_max": 0.0135,
+    "temp_min": 0.0045,
+    "precipitation": 0.0832,
+    "rain_3d_sum": 0.2127,
+    "rain_7d_sum": 0.6345,
+    "wind_speed": 0.0419,
+    "temp_range": 0.0096
+  }
+}

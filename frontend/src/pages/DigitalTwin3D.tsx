@@ -24,7 +24,7 @@ export default function DigitalTwin3D() {
 
   // sensor simulator: Δt = 2 s (paper Eq. 1)
   useEffect(() => { const t = setInterval(tick, 2000); return () => clearInterval(t); }, [tick]);
-  // 2019 flood replay: one "day" every 1.5 s
+  // flood replay (any dataset year): one "day" every 1.5 s
   useEffect(() => {
     if (replayIndex === null) return;
     tick();

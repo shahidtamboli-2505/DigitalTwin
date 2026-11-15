@@ -9,6 +9,7 @@ import Alerts from "./pages/Alerts";
 import Reports from "./pages/Reports";
 import AIModeler from "./pages/AIModeler";
 import DigitalTwin3D from "./pages/DigitalTwin3D";
+import YearAnalysis from "./pages/YearAnalysis";
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
           <Route path="/infrastructure" element={<Infrastructure />} />
           <Route path="/sensors" element={<Sensors />} />
           <Route path="/ai-predictions" element={<AIPredictions />} />
+          <Route path="/history" element={<YearAnalysis />} />
           <Route path="/twin" element={<DigitalTwin3D />} />
           <Route path="/ai-modeler" element={<AIModeler />} />
           <Route path="/alerts" element={<Alerts />} />

@@ -3,11 +3,12 @@ Analytics router — Command Center KPIs, climate data, flood history, risk brea
 """
 
 from typing import Annotated
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.datasets import load_yearly, year_summary
 from app.models.infrastructure import Infrastructure
 from app.models.sensor import Sensor
 
@@ -65,17 +66,79 @@ async def get_climate_profile():
     ]
 
 
+DOCUMENTED_FLOODS = [
+    {"year": 2005, "affected_population": 95000, "rainfall_mm": 340, "damages_crore": 1200, "river_level_m": 19.1},
+    {"year": 2006, "affected_population": 65000, "rainfall_mm": 210, "damages_crore": 310, "river_level_m": 14.8},
+    {"year": 2019, "affected_population": 200000, "rainfall_mm": 480, "damages_crore": 2800, "river_level_m": 22.8},
+    {"year": 2021, "affected_population": 85000, "rainfall_mm": 260, "damages_crore": 420, "river_level_m": 16.2},
+    {"year": 2023, "affected_population": 120000, "rainfall_mm": 320, "damages_crore": 850, "river_level_m": 18.4},
+]
+
+
 @router.get("/flood-history")
 async def get_flood_history():
-    """Return historical Sangli flood disaster records (2005 - 2023)."""
-    return [
-        {"year": 2005, "affected_population": 185000, "rainfall_mm": 640, "damages_crore": 420},
-        {"year": 2008, "affected_population": 45000, "rainfall_mm": 380, "damages_crore": 85},
-        {"year": 2011, "affected_population": 62000, "rainfall_mm": 410, "damages_crore": 110},
-        {"year": 2019, "affected_population": 320000, "rainfall_mm": 780, "damages_crore": 1250},
-        {"year": 2021, "affected_population": 240000, "rainfall_mm": 690, "damages_crore": 920},
-        {"year": 2023, "affected_population": 88000, "rainfall_mm": 460, "damages_crore": 180},
-    ]
+    """
+    Year-by-year flood summary for every year in the climate dataset (2000 → today),
+    merged with the documented disaster records (affected population, damages).
+    """
+    data = load_yearly()
+    documented = {d["year"]: d for d in DOCUMENTED_FLOODS}
+    if data is None:
+        return DOCUMENTED_FLOODS
+    out = []
+    for y in data["years"]:
+        doc = documented.get(y["year"], {})
+        out.append({
+            "year": y["year"],
+            "partial": y["partial"],
+            "rainfall_mm": y["rainfall_total_mm"],
+            "monsoon_rainfall_mm": y["rainfall_monsoon_mm"],
+            "flood_risk_days": y["flood_risk_days"],
+            "river_peak_m": y["river_peak_m"],
+            "risk_score": y["risk_score"],
+            "health_index": y["health_index"],
+            "severity": y["severity"],
+            "affected_population": doc.get("affected_population"),
+            "damages_crore": doc.get("damages_crore"),
+            "documented": y["year"] in documented,
+        })
+    return out
+
+
+@router.get("/years")
+async def list_years():
+    """All years available in the dataset with their summary (no daily series)."""
+    data = load_yearly()
+    if data is None:
+        raise HTTPException(status_code=503, detail="Yearly dataset not built. Run: python ai/training/build_yearly_dataset.py")
+    return {"meta": data["meta"], "years": [year_summary(y) for y in data["years"]]}
+
+
+@router.get("/years/{year}")
+async def get_year(year: int):
+    """Full detail for one year: summary, monthly series, daily series and peak hydrograph."""
+    data = load_yearly()
+    if data is None:
+        raise HTTPException(status_code=503, detail="Yearly dataset not built. Run: python ai/training/build_yearly_dataset.py")
+    for y in data["years"]:
+        if y["year"] == year:
+            return {"meta": data["meta"], "year": y}
+    available = [y["year"] for y in data["years"]]
+    raise HTTPException(status_code=404, detail=f"Year {year} not in dataset ({available[0]}–{available[-1]})")
+
+
+@router.get("/years/{year}/compare/{other}")
+async def compare_years(year: int, other: int):
+    """Side-by-side comparison of two years (summary fields + deltas)."""
+    data = load_yearly()
+    if data is None:
+        raise HTTPException(status_code=503, detail="Yearly dataset not built.")
+    by_year = {y["year"]: year_summary(y) for y in data["years"]}
+    if year not in by_year or other not in by_year:
+        raise HTTPException(status_code=404, detail="One of the years is not in the dataset")
+    a, b = by_year[year], by_year[other]
+    numeric = [k for k, v in a.items() if isinstance(v, (int, float)) and not isinstance(v, bool) and k != "year"]
+    return {"a": a, "b": b, "delta": {k: round(a[k] - b[k], 2) for k in numeric if k in b}}
 
 
 from pydantic import BaseModel, Field
